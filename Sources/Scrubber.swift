@@ -38,6 +38,6 @@ struct Scrubber: ParsableCommand {
             return
         }
 
-        print("Sucessfully removed: \(deleteResults.count - failures.count) directories")
+        print("Sucessfully removed: \(deleteResults.count) directories")
     }
 }

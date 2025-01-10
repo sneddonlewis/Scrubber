@@ -1,8 +1,15 @@
 import ArgumentParser
 import Foundation
 
-func isPurgeable(path: String) -> Bool {
-    return path.hasSuffix("node_modules")
+func makeIsPurgeablePredicate(matches: [String]) -> (String) -> Bool {
+    return { string in
+        for match in matches {
+            if string.hasSuffix(match) {
+                return true
+            }
+        }
+        return false
+    }
 }
 
 func findPurgeablePaths(path: String, predicate: (String) -> Bool) -> [String] {
@@ -43,6 +50,8 @@ struct Scrubber: ParsableCommand {
 
     public func run() throws {
         print("Scrub-a-dub-dub")
+
+        let isPurgeable = makeIsPurgeablePredicate(matches: ["node_modules"])
 
         let directoryPaths: [String] = findPurgeablePaths(path: path, predicate: isPurgeable)
 

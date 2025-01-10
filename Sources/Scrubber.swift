@@ -1,7 +1,11 @@
 import ArgumentParser
 import Foundation
 
-func findPurgeablePaths(path: String) -> [String] {
+func isPurgeable(path: String) -> Bool {
+    return path.hasSuffix("node_modules")
+}
+
+func findPurgeablePaths(path: String, predicate: (String) -> Bool) -> [String] {
     let directoryURL = URL(fileURLWithPath: path)
     var directoryPaths: [String] = []
 
@@ -12,7 +16,7 @@ func findPurgeablePaths(path: String) -> [String] {
             do {
                 let resourceValues = try fileURL.resourceValues(forKeys: [.isDirectoryKey])
                 if let isDirectory = resourceValues.isDirectory {
-                    if isDirectory && fileURL.path.hasSuffix("node_modules") {
+                    if isDirectory && predicate(fileURL.path) {
                         directoryPaths.append(fileURL.path)
                         enumerator.skipDescendants()
                         continue
@@ -24,8 +28,8 @@ func findPurgeablePaths(path: String) -> [String] {
         }
     } else {
         print("Could not create enumerator for directory: \(directoryURL.path)")
-
     }
+
     return directoryPaths
 }
 
@@ -40,7 +44,7 @@ struct Scrubber: ParsableCommand {
     public func run() throws {
         print("Scrub-a-dub-dub")
 
-        let directoryPaths: [String] = findPurgeablePaths(path: path)
+        let directoryPaths: [String] = findPurgeablePaths(path: path, predicate: isPurgeable)
 
         for dirPath in directoryPaths {
             print(dirPath)

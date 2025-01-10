@@ -30,14 +30,40 @@ func findPurgeablePaths(path: String, predicate: (String) -> Bool) -> [String] {
                     }
                 }
             } catch {
-                print("Error reading resource values for \(fileURL): \(error)")
+                print("Error: \(error)")
             }
         }
     } else {
-        print("Could not create enumerator for directory: \(directoryURL.path)")
+        print("Error: Cannot traverse subdirectories of \(directoryURL.path)")
     }
 
     return directoryPaths
+}
+
+struct DirDeleteResult {
+    public let path: String
+    public let isSuccess: Bool
+}
+
+func deleteDirectory(path: String) -> DirDeleteResult {
+    let directoryURL = URL(fileURLWithPath: path)
+
+    do {
+        try FileManager.default.removeItem(at: directoryURL)
+        return DirDeleteResult(path: path, isSuccess: true)
+    } catch {
+        return DirDeleteResult(path: path, isSuccess: false)
+    }
+}
+
+func deleteDirectories(paths: [String]) -> [DirDeleteResult] {
+    var results: [DirDeleteResult] = []
+
+    for path in paths {
+        results.append(deleteDirectory(path: path))
+    }
+
+    return results
 }
 
 @main
@@ -51,12 +77,33 @@ struct Scrubber: ParsableCommand {
     public func run() throws {
         print("Scrub-a-dub-dub")
 
-        let isPurgeable = makeIsPurgeablePredicate(matches: ["node_modules"])
+        let dirNamesToPurge = [
+            "node_modules"
+        ]
 
-        let directoryPaths: [String] = findPurgeablePaths(path: path, predicate: isPurgeable)
+        let isPurgeable = makeIsPurgeablePredicate(matches: dirNamesToPurge)
 
-        for dirPath in directoryPaths {
-            print(dirPath)
+        let directoryPaths = findPurgeablePaths(path: path, predicate: isPurgeable)
+
+        if directoryPaths.count == 0 {
+            print("Found 0 directories to remove.")
+            return
         }
+
+        print("Attempting to remove \(directoryPaths.count) directories")
+
+        let deleteResults = deleteDirectories(paths: directoryPaths)
+
+        let failures = deleteResults.filter({ !$0.isSuccess })
+
+        if failures.count != 0 {
+            print("Sucessfully removed: \(deleteResults.count - failures.count) directories")
+            for failure in failures {
+                print("Failed to remove: \(failure.path)")
+            }
+            return
+        }
+
+        print("Sucessfully removed: \(deleteResults.count - failures.count) directories")
     }
 }

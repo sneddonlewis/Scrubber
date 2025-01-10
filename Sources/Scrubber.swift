@@ -24,7 +24,7 @@ struct Scrubber: ParsableCommand {
             return
         }
 
-        print("Attempting to remove \(directoryPaths.count) directories")
+        print("Attempting to remove: \(directoryPaths.count) directories")
 
         let deleteResults = deleteDirectories(paths: directoryPaths)
 
@@ -38,6 +38,6 @@ struct Scrubber: ParsableCommand {
             return
         }
 
-        print("Sucessfully removed: \(deleteResults.count) directories")
+        print("Successfully removed: \(deleteResults.count) directories")
     }
 }
